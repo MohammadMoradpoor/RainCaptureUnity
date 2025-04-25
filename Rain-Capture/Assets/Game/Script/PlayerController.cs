@@ -3,71 +3,53 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour
 {
     [Header("Movement Settings")]
-    public float moveSpeed = 10f;
-    public bool useMouseControl = false;
-    public KeyCode toggleControlKey = KeyCode.T;
+    [SerializeField] private float moveSpeed = 15f;
+    [SerializeField] private float acceleration = 50f;
+    [SerializeField] private float deceleration = 10f;
 
     [Header("Screen Boundaries")]
     public float minX = -8f;
     public float maxX = 8f;
 
-    private float targetX;
-    private Camera mainCamera;
+    private Rigidbody2D rb;
 
     void Start()
     {
-        mainCamera = Camera.main;
-        targetX = transform.position.x;
+        rb = GetComponent<Rigidbody2D>();
+        // Set drag to prevent excessive sliding
+        rb.linearDamping = 5f;
     }
 
-    void Update()
+    void FixedUpdate()
     {
-        // Toggle between mouse and keyboard control
-        if (Input.GetKeyDown(toggleControlKey))
-        {
-            useMouseControl = !useMouseControl;
-        }
-
-        if (useMouseControl)
-        {
-            HandleMouseControl();
-        }
-        else
-        {
-            HandleKeyboardControl();
-        }
-
-        // Apply screen boundaries
+        HandleMovement();
         ClampPositionToScreenBoundaries();
     }
 
-    void HandleMouseControl()
-    {
-        if (Input.GetMouseButton(0)) // Only move when mouse button is pressed
-        {
-            Vector3 mousePos = mainCamera.ScreenToWorldPoint(Input.mousePosition);
-            targetX = mousePos.x;
-        }
-        
-        // Smooth horizontal movement toward target position
-        float newX = Mathf.Lerp(transform.position.x, targetX, moveSpeed * Time.deltaTime);
-        transform.position = new Vector3(newX, transform.position.y, transform.position.z);
-    }
-
-    void HandleKeyboardControl()
+    void HandleMovement()
     {
         float moveX = Input.GetAxis("Horizontal");
-
-        // Apply horizontal movement only if there's input
-        if (moveX != 0)
+        
+        if (Mathf.Abs(moveX) > 0.1f)
         {
-            transform.position += new Vector3(moveX * moveSpeed * Time.deltaTime, 0, 0);
+            // When actively moving, use acceleration for more responsive control
+            float targetVelocityX = moveX * moveSpeed;
+            float velocityChange = targetVelocityX - rb.linearVelocity.x;
+            float force = velocityChange * acceleration;
+            
+            rb.AddForce(new Vector2(force, 0));
+        }
+        else if (rb.linearVelocity.magnitude > 0.1f)
+        {
+            // Apply deceleration when no input to stop more quickly
+            rb.AddForce(-rb.linearVelocity.normalized * deceleration);
         }
     }
 
     void ClampPositionToScreenBoundaries()
     {
-        float clampedX = Mathf.Clamp(transform.position.x, minX, maxX);
-        transform.position = new Vector3(clampedX, transform.position.y, transform.position.z);
+        Vector2 currentPosition = rb.position;
+        float clampedX = Mathf.Clamp(currentPosition.x, minX, maxX);
+        rb.position = new Vector2(clampedX, currentPosition.y);
     }
 }
