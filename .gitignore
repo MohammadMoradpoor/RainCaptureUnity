@@ -66,4 +66,9 @@ Thumbs.db
 
 # Packed Addressables
 [Aa]ssets/[Ss]treamingAssets/aa.meta
-[Aa]ssets/[Ss]treamingAssets/aa/* 
+[Aa]ssets/[Ss]treamingAssets/aa/*
+
+# Large files
+Rain-Capture/Assets/Game/UnityHub.deb
+Rain-Capture/Assets/Game/UnityHub.deb.meta
+*.deb 
